@@ -1,38 +1,30 @@
 #include <Adafruit_NeoPixel.h>
 #define PIN 6
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);
+unsigned long time = 0;
+
 
 const int motorPin = 0;
 int ledDelay = 1000;
 int ledState = LOW;
 unsigned long prevTime = 0;
+void blink() {
+  if ( time - prevTime >= ledDelay ) {
+    prevTime = time;
+    
+    if ( ledState == LOW )
+      ledState = HIGH;
+    else
+      ledState = LOW;
+    digitalWrite(motorPin, ledState);
+
+  }
+}
+
 
 int stripDelay = 20;
 unsigned long stripPrevTime = 0;
 int stripColorJ = 0;
-
-
-int stripBlinkDelay = 100;
-int stripBlinkPrevTime = 0;
-int stripBlinkState = 255;
-
-unsigned long time = 0;
-
-
-void setup() {
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
-  pinMode(motorPin, OUTPUT);
-
-}
-    
-void loop() {
-  time = millis();
-  blink();
-  rainbow();
-//  stripBlink();
-}
-
 void rainbow() {
   uint16_t i, j;
 
@@ -53,6 +45,10 @@ void rainbow() {
 
 }
 
+
+int stripBlinkDelay = 100;
+int stripBlinkPrevTime = 0;
+int stripBlinkState = 255;
 void stripBlink() {
 
   if ( time - stripBlinkPrevTime >= stripBlinkDelay ) {
@@ -70,20 +66,23 @@ void stripBlink() {
   }
 }
 
-void blink() {
 
-  if ( time - prevTime >= ledDelay ) {
-    prevTime = time;
-    
-    if ( ledState == LOW )
-      ledState = HIGH;
-    else
-      ledState = LOW;
-    digitalWrite(motorPin, ledState);
-    
-//    stripBlink();
-  }
+
+void setup() {
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'
+  pinMode(motorPin, OUTPUT);
+
 }
+    
+void loop() {
+  time = millis();
+  blink();
+  rainbow();
+//  stripBlink();
+}
+
+
 
 
 
