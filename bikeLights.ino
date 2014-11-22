@@ -4,42 +4,45 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);
 unsigned long time = 0;
 
 
-const int motorPin = 0;
-int ledDelay = 1000;
-int ledState = LOW;
+const int frontLightPin = 0;
+int frontLightDelay = 50;
+int frontLightState = LOW;
 unsigned long prevTime = 0;
-void blink() {
-  if ( time - prevTime >= ledDelay ) {
+void frontLightBlink() {
+  if ( time - prevTime >= frontLightDelay ) {
     prevTime = time;
-    
-    if ( ledState == LOW )
-      ledState = HIGH;
+
+    if ( frontLightState == LOW )
+      frontLightState = HIGH;
     else
-      ledState = LOW;
-    digitalWrite(motorPin, ledState);
+      frontLightState = LOW;
+    digitalWrite(frontLightPin, frontLightState);
 
   }
 }
+void frontLightSolid() {
+  frontLightState = HIGH;
+  digitalWrite(frontLightPin, frontLightState);
+}
 
-
-int stripDelay = 20;
-unsigned long stripPrevTime = 0;
-int stripColorJ = 0;
+int rainbowDelay = 20;
+unsigned long rainbowPrevTime = 0;
+int rainbowColorJ = 0;
 void rainbow() {
   uint16_t i, j;
 
-  if ( time - stripPrevTime >= stripDelay ) {
+  if ( time - rainbowPrevTime >= rainbowDelay ) {
 
-      stripPrevTime = time;
+      rainbowPrevTime = time;
       for(i=0; i<strip.numPixels(); i++) {
-        strip.setPixelColor(i, Wheel((i+stripColorJ) & 255));
+        strip.setPixelColor(i, Wheel((i+rainbowColorJ) & 255));
       }
       strip.show();
-      
-      if ( stripColorJ <= 255 ) {
-        stripColorJ++;
+
+      if ( rainbowColorJ <= 255 ) {
+        rainbowColorJ++;
       } else {
-        stripColorJ = 0;
+        rainbowColorJ = 0;
       }
   }
 
@@ -57,7 +60,7 @@ void stripBlink() {
       stripBlinkState = 0;
     else
       stripBlinkState = 255;
-    
+
     for(uint16_t i=0; i<strip.numPixels(); i++) {
       strip.setPixelColor(i, strip.Color(stripBlinkState, 0, 0));
     }
@@ -71,15 +74,16 @@ void stripBlink() {
 void setup() {
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
-  pinMode(motorPin, OUTPUT);
+  pinMode(frontLightPin, OUTPUT);
 
 }
-    
+
 void loop() {
   time = millis();
-  blink();
-  rainbow();
-//  stripBlink();
+  frontLightSolid();
+  // frontLightBlink();
+  // rainbow();
+  stripBlink();
 }
 
 
