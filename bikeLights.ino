@@ -1,16 +1,22 @@
 #include <Adafruit_NeoPixel.h>
 #define PIN 6
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, 1, NEO_GRB + NEO_KHZ800);
-unsigned long time = 0;
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, 0, NEO_GRB + NEO_KHZ800);
+unsigned long curTime = 0;
+
+// Light Switching Input
+int frontLightSwitchPin = 13;
+int backLightSwitchPin = 12;
 
 
-const int frontLightPin = 0;
-int frontLightDelay = 50;
+
+// Front Light Functions
+const int frontLightPin = 1;
+const int frontLightDelay = 50;
 int frontLightState = LOW;
 unsigned long prevTime = 0;
 void frontLightBlink() {
-  if ( time - prevTime >= frontLightDelay ) {
-    prevTime = time;
+  if ( curTime - prevTime >= frontLightDelay ) {
+    prevTime = curTime;
 
     if ( frontLightState == LOW )
       frontLightState = HIGH;
@@ -25,15 +31,16 @@ void frontLightSolid() {
   digitalWrite(frontLightPin, frontLightState);
 }
 
+// Back Light Functions
 int rainbowDelay = 20;
 unsigned long rainbowPrevTime = 0;
 int rainbowColorJ = 0;
 void rainbow() {
   uint16_t i, j;
 
-  if ( time - rainbowPrevTime >= rainbowDelay ) {
+  if ( curTime - rainbowPrevTime >= rainbowDelay ) {
 
-      rainbowPrevTime = time;
+      rainbowPrevTime = curTime;
       for(i=0; i<strip.numPixels(); i++) {
         strip.setPixelColor(i, Wheel((i+rainbowColorJ) & 255));
       }
@@ -48,21 +55,20 @@ void rainbow() {
 
 }
 
-
 int stripBlinkDelay = 100;
-int stripBlinkPrevTime = 0;
+unsigned int stripBlinkPrevTime = 0;
 int stripBlinkState = 255;
 void stripBlink() {
 
-  if ( time - stripBlinkPrevTime >= stripBlinkDelay ) {
-    stripBlinkPrevTime = time;
+  if ( curTime - stripBlinkPrevTime >= stripBlinkDelay ) {
+    stripBlinkPrevTime = curTime;
     if ( stripBlinkState == 255 )
       stripBlinkState = 0;
     else
       stripBlinkState = 255;
 
-    for(uint16_t i=0; i<strip.numPixels(); i++) {
-      strip.setPixelColor(i, strip.Color(stripBlinkState, 0, 0));
+    for(uint16_t ii=0; ii<strip.numPixels(); ii++) {
+      strip.setPixelColor(ii, strip.Color(stripBlinkState, 0, 0));
     }
     strip.show();
 
@@ -72,18 +78,34 @@ void stripBlink() {
 
 
 void setup() {
+  // input
+  pinMode(frontLightSwitchPin, INPUT_PULLUP);
+  pinMode(backLightSwitchPin, INPUT_PULLUP);
+
+  // front light
+  pinMode(frontLightPin, OUTPUT);
+
+  // setup strip (back light)
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
-  pinMode(frontLightPin, OUTPUT);
 
 }
 
 void loop() {
-  time = millis();
-  frontLightSolid();
-  // frontLightBlink();
-  // rainbow();
-  stripBlink();
+  curTime = millis();
+
+  if (digitalRead(frontLightSwitchPin) == LOW) {
+    frontLightBlink();
+  } else {
+    frontLightSolid();
+  }
+  if (digitalRead(backLightSwitchPin) == LOW) {
+    rainbow();
+  } else {
+    stripBlink();
+  }
+
+    // stripBlink();
 }
 
 
