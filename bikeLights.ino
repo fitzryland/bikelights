@@ -1,44 +1,109 @@
 #include <Adafruit_NeoPixel.h>
-#define PIN 6
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, 0, NEO_GRB + NEO_KHZ800);
+#define PIN 8
+#define NUMPIXELS 8
+
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 unsigned long curTime = 0;
 
 // Light Switching Input
-int frontLightSwitchPin = 13;
-int backLightSwitchPin = 12;
+int frontLightSwitchPin = 2;
+int backLightSwitchPin = 1;
 
+// Front Light Vars
+const int frontLightPin = 5;
+const int frontLightDelay = 50;
+int frontLightState = LOW;
+unsigned long frontLightPrevTime = 0;
+int frontLightTimeDelta = 0;
+
+// Back Light Vars
+int rainbowDelay = 20;
+unsigned long rainbowPrevTime = 0;
+int rainbowColorJ = 0;
+int rainbowTimeDelta = 0;
+
+int stripBlinkDelay = 100;
+unsigned int stripBlinkPrevTime = 0;
+int stripBlinkState = 255;
+int stripBlinkTimeDelta = 0;
+
+// Charging Status
+int batStat1Pin = 9;
+int batStat2Pin = 10;
+int batStat1 = LOW;
+int batStat2 = LOW;
+
+void setup() {
+  // input
+  // light switching
+  pinMode(frontLightSwitchPin, INPUT_PULLUP);
+  pinMode(backLightSwitchPin, INPUT_PULLUP);
+  // charge status
+  pinMode(batStat1Pin, INPUT);
+  pinMode(batStat2Pin, INPUT);
+
+  // front light
+  pinMode(frontLightPin, OUTPUT);
+
+  // setup strip (back light)
+  strip.begin();
+  strip.show(); // Initialize all pixels to 'off'
+
+  digitalWrite(frontLightPin, frontLightState);
+
+}
+
+// Charging Functions
+void setFirstPixel(uint32_t color) {
+  for(uint16_t ii=0; ii<strip.numPixels(); ii++) {
+    if ( ii == 0 ) {
+      strip.setPixelColor(ii, color);
+    } else {
+      strip.setPixelColor(ii, strip.Color(0, 0, 0));
+    }
+  }
+  strip.show();
+  digitalWrite(frontLightPin, LOW);
+}
+void batStatCharging() {
+  setFirstPixel(strip.Color(10, 10, 0));
+}
+void batStatCharged() {
+  setFirstPixel(strip.Color(0, 10, 0));
+}
 
 
 // Front Light Functions
-const int frontLightPin = 1;
-const int frontLightDelay = 50;
-int frontLightState = LOW;
-unsigned long prevTime = 0;
 void frontLightBlink() {
-  if ( curTime - prevTime >= frontLightDelay ) {
-    prevTime = curTime;
+
+  frontLightTimeDelta = curTime - frontLightPrevTime;
+
+  if ( frontLightTimeDelta >= frontLightDelay ) {
+    frontLightPrevTime = curTime;
 
     if ( frontLightState == LOW )
       frontLightState = HIGH;
     else
       frontLightState = LOW;
+
     digitalWrite(frontLightPin, frontLightState);
 
   }
+
 }
 void frontLightSolid() {
   frontLightState = HIGH;
   digitalWrite(frontLightPin, frontLightState);
 }
 
+
 // Back Light Functions
-int rainbowDelay = 20;
-unsigned long rainbowPrevTime = 0;
-int rainbowColorJ = 0;
 void rainbow() {
   uint16_t i, j;
 
-  if ( curTime - rainbowPrevTime >= rainbowDelay ) {
+  rainbowTimeDelta = curTime - rainbowPrevTime;
+
+  if ( rainbowTimeDelta > rainbowDelay ) {
 
       rainbowPrevTime = curTime;
       for(i=0; i<strip.numPixels(); i++) {
@@ -54,13 +119,11 @@ void rainbow() {
   }
 
 }
-
-int stripBlinkDelay = 100;
-unsigned int stripBlinkPrevTime = 0;
-int stripBlinkState = 255;
 void stripBlink() {
 
-  if ( curTime - stripBlinkPrevTime >= stripBlinkDelay ) {
+  stripBlinkTimeDelta = curTime - stripBlinkPrevTime;
+
+  if ( stripBlinkTimeDelta > stripBlinkDelay ) {
     stripBlinkPrevTime = curTime;
     if ( stripBlinkState == 255 )
       stripBlinkState = 0;
@@ -77,35 +140,32 @@ void stripBlink() {
 
 
 
-void setup() {
-  // input
-  pinMode(frontLightSwitchPin, INPUT_PULLUP);
-  pinMode(backLightSwitchPin, INPUT_PULLUP);
-
-  // front light
-  pinMode(frontLightPin, OUTPUT);
-
-  // setup strip (back light)
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
-
-}
-
 void loop() {
   curTime = millis();
 
-  if (digitalRead(frontLightSwitchPin) == LOW) {
-    frontLightBlink();
+  batStat1 = digitalRead(batStat1Pin);
+  batStat2 = digitalRead(batStat2Pin);
+
+  if ( batStat1 == HIGH ) {
+    batStatCharged();
+  } else if ( batStat2 == HIGH ) {
+    batStatCharging();
   } else {
-    frontLightSolid();
-  }
-  if (digitalRead(backLightSwitchPin) == LOW) {
-    rainbow();
-  } else {
-    stripBlink();
+    if (digitalRead(frontLightSwitchPin) == LOW) {
+      frontLightBlink();
+    } else {
+      frontLightSolid();
+    }
+    if (digitalRead(backLightSwitchPin) == LOW) {
+      rainbow();
+    } else {
+      stripBlink();
+    }
   }
 
-    // stripBlink();
+  // digitalWrite(frontLightPin, HIGH);
+
+
 }
 
 
